@@ -1,25 +1,48 @@
-name: CI
+name: Jupyter
 
 on: 
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ] 
-    
-    
-    
+
   workflow_dispatch:
+  schedule:
+    - cron: '0 */24 * * *'
   
 jobs:
 
   build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: action/checkout@v2
-    - name: Run a one-line script
-      run: echo hello,world!
+    runs-on: ubuntu-latest 
     
-    - name: Run a multi-line script
-      run: 
-        echo Add other action to build,
-        echo test, and deploy your project
+  steps:
+    - id: repo
+      name: Repo Checkout
+      uses: actions/checkout@v3
+    
+    - id: python
+      name: Python Setup & Packages Installation
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip' # caching pip dependencies
+    - run: pip install -r requirements.txt
+    
+    - id: jupyter
+      name: Jupyter Notebook Execution
+      run: jupyter execute AI_Lab.ipynb
+      shell: bash
+      
+    - id: commit
+        name: Commit Files
+        run:
+          git config --local user.name actions-user
+
+          git config --local user.email "actions@github.com"
+
+          git add *
+
+          git commit -am "GH ACTION Headlines $(date)"
+
+          git push origin main
+
+        env:
+          REPO_KEY: ${{secrets.GITHUB_TOKEN}}
+
+          username: github-actions
